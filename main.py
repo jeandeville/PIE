@@ -4,7 +4,8 @@ Created on Mon Dec 14 22:24:19 2015
 
 @author: Etienne
 
-Par rapport à main: suppression de RK1, implémentation de RK2
+Par rapport à main2: suppression de RK2, remplacement par RK6.
+
 """
 
 
@@ -28,8 +29,6 @@ Niter = 200; # nombre d'itérations
 dt = 0.005; # pas de calcul
 c =1.; # vitesse du son
 
-## déclaration des vecteurs donnés
-P = np.zeros((N,3)); # champ de pression (points solutions)
 
 
 ## déclaration des vecteurs positions
@@ -37,9 +36,20 @@ Xs = np.zeros((N,3));
 Xf = np.zeros((N,4));
 
 #degre RK
-deg = 2;
+deg = 6;
+
+#stockage coefficients RK (cf article Bogey 2013)
+gamma = np.zeros(6);
+gamma[0]=1;
+gamma[1]=0.5;
+gamma[2]=0.165919771368;
+gamma[3]=0.040919732041;
+gamma[4]=0.007555704391;
+gamma[5]=0.000891421261;
 
 #stockage Qbarre
+#Qb[:,:,0] correspond à Q à l'instant n.
+#Qb[:,:,1 à 5] correspond aux "Qbarres" qui servent à construire Ruge Kutta
 Qb = np.zeros((N,3,deg));
 
 
@@ -64,20 +74,19 @@ for cell in range(np.round(N/2)-1, np.round(N/2)):#############################C
 
 for iter in range(Niter):
     
-        # plot du champ P
+         # plot du champ P
     plt.plot(np.reshape(Xs,(3*N,1)),np.reshape(Qb[:,:,0],(3*N,1)),'-b')
     plt.show()
-    plt.pause(0.0001)    
+    plt.pause(0.0001)
+     
     
         #RK2: calcul des Qbarres
     for i in range(1,deg):
-        Qb[:,:,i] = Qb[:,:,0] - 0.5 * dt * fct.flux(P,Xs,Xf,N,c);
+        Qb[:,:,i] = Qb[:,:,i-1] - gamma[i] * dt * fct.flux(Qb[:,:,i-1],Xs,Xf,N,c);
         
-        #Assemblage final Runge-Kutta
-    Qb[:,:,0] = Qb[:,:,0] - dt * fct.flux(Qb[:,:,1],Xs,Xf,N,c);
-        
-      
-
+        #Assemblage final Runge-Kutta (dans notre cas, on a juste Qn+1 = le dernier "Qbarre" de Qn)
+    Qb[:,:,0] = Qb[:,:,deg-1];
+    
 
 
     
