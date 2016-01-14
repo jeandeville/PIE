@@ -3,6 +3,8 @@
 Created on Mon Dec 14 22:24:19 2015
 
 @author: Etienne
+
+Par rapport à main: suppression de RK1, implémentation de RK2
 """
 
 
@@ -27,7 +29,6 @@ dt = 0.005; # pas de calcul
 c =1.; # vitesse du son
 
 ## déclaration des vecteurs donnés
-Pprevious = np.zeros((N,3)); # champ de pression (points solutions) au temps t-dt
 P = np.zeros((N,3)); # champ de pression (points solutions)
 
 
@@ -36,12 +37,11 @@ Xs = np.zeros((N,3));
 Xf = np.zeros((N,4));
 
 #degre RK
-deg = 2
+deg = 2;
 
 #stockage Qbarre
-#Qb1 = np.zeros(deg,N);
-#Qb2 = np.zeros(deg,N);
-#Qb3 = np.zeros(deg,N);
+Qb = np.zeros((N,3,deg));
+
 
 
 ## initialisation des vecteurs position
@@ -53,31 +53,32 @@ for i in range(N):
     for j in range(4):
         Xf[i,j] = j/3./N+ i*1./N;
 
+
+
 ## initialisation du vecteur de pression
 for cell in range(np.round(N/2)-1, np.round(N/2)):#############################CONDITION INITIALES
     for j in range(3):
-        P[cell,j] = np.sin(np.pi*N*Xs[cell,j]);
+        Qb[cell,j,0] = np.sin(np.pi*N*Xs[cell,j]);
 
 
 
 for iter in range(Niter):
     
-    Pprevious = P;
+        # plot du champ P
+    plt.plot(np.reshape(Xs,(3*N,1)),np.reshape(Qb[:,:,0],(3*N,1)),'-b')
+    plt.show()
+    plt.pause(0.0001)    
     
-        #RK1 
-    P = Pprevious - dt * fct.flux(Pprevious,Xs,Xf,N,c)
-    
-    
-        #RK2
-    #for i in range(deg):
+        #RK2: calcul des Qbarres
+    for i in range(1,deg):
+        Qb[:,:,i] = Qb[:,:,0] - 0.5 * dt * fct.flux(P,Xs,Xf,N,c);
+        
+        #Assemblage final Runge-Kutta
+    Qb[:,:,0] = Qb[:,:,0] - dt * fct.flux(Qb[:,:,1],Xs,Xf,N,c);
         
       
 
-    
-        # plot du champ P
-    plt.plot(np.reshape(Xs,(3*N,1)),np.reshape(P,(3*N,1)),'-b')
-    plt.show()
-    plt.pause(0.0001)
+
 
     
     
