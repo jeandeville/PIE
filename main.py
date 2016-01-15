@@ -22,10 +22,11 @@ Par rapport à main2: suppression de RK2, remplacement par RK6.
 import numpy as np
 import matplotlib.pyplot as plt
 import fonction as fct
+from SP_FP import *
 
 equation = 'ADVECTION'; # BURGER or ADVECTION
-N = 10; # taille du maillage
-Niter = 200; # nombre d'itérations
+N = 50; # taille du maillage
+Niter = 500; # nombre d'itérations
 dt = 0.005; # pas de calcul
 c =1.; # vitesse du son
 
@@ -55,14 +56,16 @@ Qb = np.zeros((N,3,deg));
 
 
 ## initialisation des vecteurs position
-for i in range(N):
-    for j in range(3):
-        Xs[i,j] = (2.*j+1.)/6./N + i*1./N;
-        
-for i in range(N):
-    for j in range(4):
-        Xf[i,j] = j/3./N+ i*1./N;
+#for i in range(N):
+#    for j in range(3):
+#        Xs[i,j] = (2.*j+1.)/6./N + i*1./N;
+#        
+#for i in range(N):
+#    for j in range(4):
+#        Xf[i,j] = j/3./N+ i*1./N;
 
+Xf=adaptFluxPoints(N);
+Xs=adaptSolPoints(N);
 
 
 ## initialisation du vecteur de pression
@@ -80,7 +83,7 @@ for iter in range(Niter):
     plt.pause(0.0001)
      
     
-        #RK2: calcul des Qbarres
+        #RK6: calcul des Qbarres
     for i in range(1,deg):
         Qb[:,:,i] = Qb[:,:,i-1] - gamma[i] * dt * fct.flux(Qb[:,:,i-1],Xs,Xf,N,c);
         
