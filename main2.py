@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """
 Created on Tue Jan 19 13:32:52 2016
-
 @author: jeandeville
 """
 
@@ -36,8 +35,8 @@ for i in range(N):
 U = np.zeros(N*(p+1));
 
 ##declaration matrice Lagrange solution (deplacement vers les points flux)
-print(lagrange(Xs,Xf,2,3));
-
+#print(lagrange(Xs,Xf,2,3));
 
 ##Matrice 
 E = extrapolation(Xs,Xf);
+print("matrice d'éxtrapolation",E);
