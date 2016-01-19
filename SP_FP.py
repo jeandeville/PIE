@@ -24,37 +24,36 @@ def defFluxPoints(n):
     for i in range(1,n-1):
         res[i]=roots[i-1];
     return res;
+
+def adaptSolPoints(N):
+    Xp = np.zeros((N,3));
+    xxp=defSolPoints(N*(3-1)+1);
+    #print("xxp",xxp);
     
-    
-    
-# Definition du terme generique de la matrice  [L_k(f_j)](1<=k<=p+1;1<=j<=p+2)
-def lagrange(Xs,Xf,k,j):
-    
-    p = np.size(Xs)-1;
-    
-    Li = 1
-    for i in range(p+1):
-        if (i!=k):
-            Li = Li*(Xf[j]-Xs[i])/(Xs[k]-Xs[i])
-                        
-    return Li;
-    
-# Creation de la matrice d'extrapolation
-def extrapolation(Xs,Xf):
-    
-    p = np.size(Xs)-1;
-    
-    E = np.zeros([p+4,3*(p+1)]);
-    
-    for i in range(p+1):
-        E[0,i] = lagrange(Xs,Xf,i,p+1);
-    
-    for i in range(p+2):
-        for j in range(p+1):
-            E[i+1,p+1+j] = lagrange(Xs,Xf,j,i);
+    for i in range(N):
             
-    for i in range(p+1):
-        E[p+3,2*(p+1)+i] = lagrange(Xs,Xf,i,0);
-    return E;
+            #print("Ligne", i, Xp[i,:])
+            #print("Ligne", i, xxp[i*2:(i+1)*2+1])
+            Xp[i,:] = xxp[i*2:(i+1)*2+1];
+         
+    #print("Xp",Xp);
+    return Xp;
+    
+def adaptFluxPoints(N):
+    Xf = np.zeros((N,4));
+    #print("Xf",Xf);
+    xxf=defFluxPoints(N*(4-1)+1);
+    #print("xxf",xxf);
+    
+    for i in range(N):
             
-        
+            #print("Ligne", i, Xf[i,:])
+            #print("Ligne", i, xxf[i*3:(i+1)*3+1])
+            Xf[i,:] = xxf[i*3:(i+1)*3+1];
+         
+    #print("Xf",Xf);
+    return Xf;
+    
+    
+    
+    
