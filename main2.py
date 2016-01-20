@@ -10,13 +10,15 @@ import numpy as np
 import matplotlib.pyplot as plt
 from SP_FP import *
 
-
+c =1.; # vitesse du son
+CFL = 1.;
+p = 3; #degre polynome dans chaque cellule
 #equation = 'ADVECTION'; # BURGER or ADVECTION
-N = 50; # taille du maillage
-Niter = 500; # nombre d'itérations
-dt = 0.005; # pas de calcul
-c =-10.; # vitesse du son
-p = 2; #degre polynome dans chaque cellule
+N = 100; # taille du maillage
+Niter = 300; # nombre d'itérations
+dt = CFL*2/(c*(p+1)); # pas de calcul
+
+
 
 
 ## déclaration des vecteurs positions
@@ -31,16 +33,20 @@ for i in range(N):
     Ms[i,:] = Xs + 2*i +1;
     Mf[i,:] = Xf + 2*i +1;
     
-    
+ 
+U = np.exp(-(np.add(Ms,-100)**2/0.1));
+
+U = np.exp(-((np.add(Ms,-100)+0.)**2/100.));
 ##Declaration solution 
-U = np.zeros((N,p+1));
+#U = np.zeros((N,p+1));
 
 ##INITIALISATION DE LA SOLUTION
-#solution constante
-U = np.zeros((N,p+1));
+#solution constant
+#U = np.ones((N,p+1));
 #solution "CHAPEAU"
-U[round(N/2),:] = Xs + 1;
-U[round(N/2)+1,:] = -Xs + 1;
+#U[round(N/2),:] = Xs + 1;
+#U[round(N/2)+1,:] = -Xs + 1;
+
 
 
 #Matrice d'extrapolation
@@ -63,12 +69,12 @@ M = np.zeros((N,p+1));
 
 #stockage coefficients RK (cf article Bogey 2013)
 gamma = np.zeros(6);
-gamma[0]=1;
-gamma[1]=0.5;
-gamma[2]=0.165919771368;
-gamma[3]=0.040919732041;
-gamma[4]=0.007555704391;
-gamma[5]=0.000891421261;
+gamma[5]=1;
+gamma[4]=0.5;
+gamma[3]=0.165919771368;
+gamma[2]=0.040919732041;
+gamma[1]=0.007555704391;
+gamma[0]=0.000891421261;
 
 ####################
 #début des itérations en temps
@@ -77,7 +83,7 @@ for timestep in range(Niter):
     Ustockage = U;
     
     #boucle de RK6    
-    for i in range(1,6):    
+    for i in range(6):    
         
         #Début des itérations sur les cellules
         for cell in range(N):
@@ -104,10 +110,11 @@ for timestep in range(Niter):
             M[cell,:] =np.transpose(M_t);     
        
        
-        U = Ustockage + gamma[i] * dt * M;
+        U = Ustockage - gamma[i] * dt * M;
     
         
         
     plt.plot(np.reshape(Ms,(N*(p+1),1)),np.reshape(U,(N*(p+1),1)),'-b')
     plt.show()
     plt.pause(0.0000000001)
+    
