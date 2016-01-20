@@ -13,9 +13,9 @@ from SP_FP import *
 
 #equation = 'ADVECTION'; # BURGER or ADVECTION
 N = 50; # taille du maillage
-Niter = 1; # nombre d'itérations
+Niter = 500; # nombre d'itérations
 dt = 0.005; # pas de calcul
-c =1.; # vitesse du son
+c =-10.; # vitesse du son
 p = 2; #degre polynome dans chaque cellule
 
 
@@ -37,13 +37,10 @@ U = np.zeros((N,p+1));
 
 ##INITIALISATION DE LA SOLUTION
 #solution constante
-#U = np.ones((N,p+1));
+U = np.zeros((N,p+1));
 #solution "CHAPEAU"
 U[round(N/2),:] = Xs + 1;
 U[round(N/2)+1,:] = -Xs + 1;
-
-##declaration matrice Lagrange solution (deplacement vers les points flux)
-print(lagrange(Xs,Xf,2,3));
 
 
 #Matrice d'extrapolation
@@ -56,40 +53,61 @@ for i in range(1,p+1):
 F[0,0:2]=[0.5*(1+np.sign(c)),0.5*(1-np.sign(c))];
 F[p+1,p+2:p+4]=[0.5*(1+np.sign(c)),0.5*(1-np.sign(c))];
 F = c*F;
-
+#creation de la matrice de dérivation
+D = derivation(Xs,Xf);
 #déclaration de la matrice U_t "U tild"
 U_t = np.zeros((3*(p+1),1));
+
+#declaration de M matrice N x (p+1)
+M = np.zeros((N,p+1));
+
+#stockage coefficients RK (cf article Bogey 2013)
+gamma = np.zeros(6);
+gamma[0]=1;
+gamma[1]=0.5;
+gamma[2]=0.165919771368;
+gamma[3]=0.040919732041;
+gamma[4]=0.007555704391;
+gamma[5]=0.000891421261;
 
 ####################
 #début des itérations en temps
 for timestep in range(Niter):
-    #Début des itérations sur les cellules
-    for cell in range(N):
+    
+    Ustockage = U;
+    
+    #boucle de RK6    
+    for i in range(1,6):    
         
-        #définition de la variable U_t "U tild"
-        if(cell == 0):
-            U_t[0:p+1,0] = U[N-1,:];
-            U_t[p+1:2*(p+1),0] = U[0,:];
-            U_t[2*(p+1):3*(p+1),0] = U[1,:];
-        elif(cell == N-1):
-            U_t[0:p+1,0] = U[N-2,:];
-            U_t[p+1:2*(p+1),0] = U[N-1,:];
-            U_t[2*(p+1):3*(p+1),0] = U[0,:];
-        else:
-            U_t[0:p+1,0] = U[cell-1,:];
-            U_t[p+1:2*(p+1),0] = U[cell,:];
-            U_t[2*(p+1):3*(p+1),0] = U[cell+1,:];
+        #Début des itérations sur les cellules
+        for cell in range(N):
             
-        V = np.dot(E,U_t);
-        W = np.dot(F,V);
+            #définition de la variable U_t "U tild"
+            if(cell == 0):
+                U_t[0:p+1,0] = U[N-1,:];
+                U_t[p+1:2*(p+1),0] = U[0,:];
+                U_t[2*(p+1):3*(p+1),0] = U[1,:];
+            elif(cell == N-1):
+                U_t[0:p+1,0] = U[N-2,:];
+                U_t[p+1:2*(p+1),0] = U[N-1,:];
+                U_t[2*(p+1):3*(p+1),0] = U[0,:];
+            else:
+                U_t[0:p+1,0] = U[cell-1,:];
+                U_t[p+1:2*(p+1),0] = U[cell,:];
+                U_t[2*(p+1):3*(p+1),0] = U[cell+1,:];
+                
+            V = np.dot(E,U_t);
+            W = np.dot(F,V);
+            M_t = np.dot(D,W);
+            
+            ###########      
+            M[cell,:] =np.transpose(M_t);     
+       
+       
+        U = Ustockage + gamma[i] * dt * M;
+    
         
-        ###########
-        
-        
-        
-        ###########
-        U[cell,:] = U_t[p+1:2*(p+1),0]        
         
     plt.plot(np.reshape(Ms,(N*(p+1),1)),np.reshape(U,(N*(p+1),1)),'-b')
     plt.show()
-    plt.pause(0.0001)
+    plt.pause(0.0000000001)
