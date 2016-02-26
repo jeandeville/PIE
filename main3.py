@@ -2,7 +2,7 @@
 """
 Created on Tue Jan 19 13:32:52 2016
 
-@author: Pierre-Edouard
+@author: 
 """
 
 
@@ -12,11 +12,11 @@ from SP_FP import *
 from fonctions_irreg import *
 
 c =1.; # vitesse du son
-CFL = 1.;
+CFL = 0.1;
 p = 3; #degre polynome dans chaque cellule
 #equation = 'ADVECTION'; # BURGER or ADVECTION
-N = 25; # taille du maillage, nombre de cellules
-Niter = 0; # nombre d'itérations
+N = 26; # taille du maillage, nombre de cellules
+Niter = 1000; # nombre d'itérations
 dt = CFL*2/(c*(p+1)); # pas de calcul
 ###########
 ###
@@ -31,7 +31,17 @@ L = 50.;
 #Definition
 
 #Xirreg = np.linspace(0,L,N+1);
-Xirreg = [0.,3.,4.,6.,9.,11.,12.,13.,15.,19.,20.,24.,25.,26.,28.,32.,33.,34.,38.,42.,43.,45.,46.,47.,48.,50.]; #maillage des cellules
+#Xirreg = [0.,6.,7.,8.,9.,11.,12.,13.,15.,16.,17.,24.,25.,26.,28.,32.,33.,34.,38.,42.,43.,45.,46.,47.,48.,50.]; #maillage des cellules
+N1 = 80;
+N2 = 10;
+NN = N1 + N2 - 1; #Nb de points
+N = NN - 1;
+
+Xirreg = np.zeros(NN)
+Xreg1 = np.linspace(0,L/2,N1);
+Xreg2 = np.linspace(L/2,L,N2);
+Xirreg[0:N1] = Xreg1;
+Xirreg[N1:N1+N2-1] = Xreg2[1:N2];
 
 jacobian = jacobian(Xirreg);
 
@@ -63,44 +73,23 @@ for i in range(N):
 Ms_irreg = maillage(Xs,jacobian,N,p); #définition de l'emplacement des points solutions dans le "physical plane" à partir de ceux du "computational plane"
 
 
-U = np.exp(-(np.add(Ms_irreg,-L/2)**2/100)); #initialisation dans le domaine irregulier
+U = np.exp(-(np.add(Ms_irreg,-L/4)**2/5)); #initialisation dans le domaine irregulier
 
 #plt.plot(np.reshape(Ms_irreg,(N*(p+1),1)),np.reshape(U,(N*(p+1),1)),'-b')
 #plt.show()
     
-Ubarre = np.zeros([N,p+1]);
+#Ubarre = np.zeros([N,p+1]);
 
-for i in range(p+1):
-    Ubarre[:,i] = np.multiply(jacobian[:,0],U[:,i]);
+#for i in range(p+1):
+    #Ubarre[:,i] = np.multiply(jacobian[:,0],U[:,i]);
     
-plt.plot(np.reshape(Ms,(N*(p+1),1)),np.reshape(Ubarre,(N*(p+1),1)),'-b')
-plt.show()
+#plt.plot(np.reshape(Ms,(N*(p+1),1)),np.reshape(Ubarre,(N*(p+1),1)),'-b')
+#plt.show()
 
 #########
 ####################
 ####################
 ####################   
-
- 
-#U = np.exp(-(np.add(Ms,-100)**2/0.1));
-#U = np.exp(-((np.add(Ms,-100)+0.)**2/100.));
-
-
-
-
-
-
-
-##Declaration solution 
-#U = np.zeros((N,p+1));
-
-##INITIALISATION DE LA SOLUTION
-#solution constant
-#U = np.ones((N,p+1));
-#solution "CHAPEAU"
-#U[round(N/2),:] = Xs + 1;
-#U[round(N/2)+1,:] = -Xs + 1;
-
 
 
 #Matrice d'extrapolation
@@ -134,7 +123,7 @@ gamma[0]=0.000891421261;
 #début des itérations en temps
 for timestep in range(Niter):
     
-    Ustockage = Ubarre;
+    Ustockage = U;
     
     #boucle de RK6    
     for i in range(6):    
@@ -144,17 +133,17 @@ for timestep in range(Niter):
             
             #définition de la variable U_t "U tild"
             if(cell == 0):
-                U_t[0:p+1,0] = Ubarre[N-1,:];
-                U_t[p+1:2*(p+1),0] = Ubarre[0,:];
-                U_t[2*(p+1):3*(p+1),0] = Ubarre[1,:];
+                U_t[0:p+1,0] = U[N-1,:];
+                U_t[p+1:2*(p+1),0] = U[0,:];
+                U_t[2*(p+1):3*(p+1),0] = U[1,:];
             elif(cell == N-1):
-                U_t[0:p+1,0] = Ubarre[N-2,:];
-                U_t[p+1:2*(p+1),0] = Ubarre[N-1,:];
-                U_t[2*(p+1):3*(p+1),0] = Ubarre[0,:];
+                U_t[0:p+1,0] = U[N-2,:];
+                U_t[p+1:2*(p+1),0] = U[N-1,:];
+                U_t[2*(p+1):3*(p+1),0] = U[0,:];
             else:
-                U_t[0:p+1,0] = Ubarre[cell-1,:];
-                U_t[p+1:2*(p+1),0] = Ubarre[cell,:];
-                U_t[2*(p+1):3*(p+1),0] = Ubarre[cell+1,:];
+                U_t[0:p+1,0] = U[cell-1,:];
+                U_t[p+1:2*(p+1),0] = U[cell,:];
+                U_t[2*(p+1):3*(p+1),0] = U[cell+1,:];
                 
             V = np.dot(E,U_t);
             W = np.dot(F,V);
@@ -166,17 +155,17 @@ for timestep in range(Niter):
         Mbarre = np.zeros([N,p+1]);
         for j in range(p+1):
             for k in range(N):
-                Mbarre[k,j] = M[k,j];#*jacobian[k,2];
+                Mbarre[k,j] = M[k,j]*jacobian[k,2];
             
-        Ubarre = Ustockage - gamma[i] * dt * Mbarre;
-        for j in range(p+1):
-            for k in range(N):
-                U[k,j] = Ubarre[k,j]*jacobian[k,2];
+        U = Ustockage - gamma[i] * dt * Mbarre;
+
         
     
         
-        
+    plt.axis([0, L, 0, 1.1])    
     plt.plot(np.reshape(Ms_irreg,(N*(p+1),1)),np.reshape(U,(N*(p+1),1)),'-b')
     plt.show()
     plt.pause(0.0000000001)
+    plt.clf()
+    
     
